@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bufio"
 	"encoding/csv"
 	"flag"
 	"fmt"
@@ -130,7 +131,11 @@ func processPcapFile(config Config) {
 			log.Fatal(err)
 		}
 		defer csvFile.Close()
-		csvWriter = csv.NewWriter(csvFile)
+		
+		// Use buffered writer for better CSV write performance
+		bufferedCSV := bufio.NewWriterSize(csvFile, 256*1024)
+		defer bufferedCSV.Flush()
+		csvWriter = csv.NewWriter(bufferedCSV)
 		if err := csvWriter.Write(header); err != nil {
 			log.Fatal(err)
 		}

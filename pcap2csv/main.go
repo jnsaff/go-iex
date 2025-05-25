@@ -7,6 +7,7 @@
 package main
 
 import (
+	"bufio"
 	"encoding/csv"
 	"fmt"
 	"io"
@@ -110,7 +111,11 @@ func main() {
 		log.Fatal(err)
 	}
 	defer output.Close()
-	writer := csv.NewWriter(output)
+	
+	// Use buffered writer for better CSV write performance
+	bufferedOutput := bufio.NewWriterSize(output, 256*1024)
+	defer bufferedOutput.Flush()
+	writer := csv.NewWriter(bufferedOutput)
 	if err := writer.Write(header); err != nil {
 		log.Fatal(err)
 	}

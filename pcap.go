@@ -21,6 +21,10 @@ const (
 	pcapNGMagic uint32 = 0x0A0D0D0A
 
 	maxDatagramSize = 65536
+	
+	// Optimized buffer sizes for NVMe SSD sequential reads
+	// 256KB provides optimal throughput for modern NVMe drives
+	optimalBufferSize = 256 * 1024
 )
 
 // PacketDataSource represents a source of decoded network packets
@@ -78,7 +82,7 @@ func NewGopacketDataSource(packetSource *gopacket.PacketSource) *GopacketDataSou
 
 // Create a new GopacketDataSource from the given pcap or pcap-ng file data.
 func NewPcapDataSource(r io.Reader) (*GopacketDataSource, error) {
-	input := bufio.NewReader(r)
+	input := bufio.NewReaderSize(r, optimalBufferSize)
 	gzipMagic, err := input.Peek(2)
 	if err != nil {
 		return nil, err
@@ -88,7 +92,7 @@ func NewPcapDataSource(r io.Reader) (*GopacketDataSource, error) {
 		if gzf, err := gzip.NewReader(input); err != nil {
 			return nil, err
 		} else {
-			input = bufio.NewReader(gzf)
+			input = bufio.NewReaderSize(gzf, optimalBufferSize)
 		}
 	}
 
