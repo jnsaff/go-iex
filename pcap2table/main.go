@@ -238,17 +238,22 @@ func writeSingleEntry(entry *Entry, w Writer) error {
 	return w.Write(row)
 }
 
-func isTradingHour(t time.Time) bool {
-	// Convert the time to Eastern Standard Time (EST)
+// Load timezone once at startup to avoid repeated file I/O
+var nyTZ = func() *time.Location {
 	loc, err := time.LoadLocation("America/New_York")
 	if err != nil {
 		log.Fatal(err)
 	}
-	est := t.In(loc)
+	return loc
+}()
+
+func isTradingHour(t time.Time) bool {
+	// Convert the time to Eastern Time (handles both EST and EDT)
+	est := t.In(nyTZ)
 
 	// Check if the time is within trading hours
-	tradingStart := time.Date(est.Year(), est.Month(), est.Day(), 9, 30, 0, 0, est.Location())
-	tradingEnd := time.Date(est.Year(), est.Month(), est.Day(), 16, 0, 0, 0, est.Location())
+	tradingStart := time.Date(est.Year(), est.Month(), est.Day(), 9, 30, 0, 0, nyTZ)
+	tradingEnd := time.Date(est.Year(), est.Month(), est.Day(), 16, 0, 0, 0, nyTZ)
 	return est.Equal(tradingStart) || (est.After(tradingStart) && est.Before(tradingEnd))
 }
 
